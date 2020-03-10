@@ -36,9 +36,10 @@ class Chiper():
     
     def _gen_keys(self):
         # Generated the keys used for process.
+        keygen = self.keygen.gen()
         self.keys = [] 
         for r in range(self.ROUNDS):
-            self.keys.append(self.keygen.next_key())
+            self.keys.append(next(keygen))
     
     def encode_block(self, block):
         next_L, next_R = self._split(block)
