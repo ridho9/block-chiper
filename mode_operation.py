@@ -19,6 +19,10 @@ class ModeOperation:
     def _xorblock(b1, b2):
         return bytes(a ^ b for (a, b) in zip(b1, b2))
 
+    def _pad_pkcs5(self, msg):
+        n = self.BLOCK_SIZE // 8
+        return msg + (bytes([n - len(msg) % n]) * (n - len(msg) % n))
+
     def _encrypt_ecb(self, block_plaintext):
         ciphertext = b""
         for block in block_plaintext:
@@ -56,15 +60,14 @@ class ModeOperation:
         ciphertext = b""
         counter: int = self.counter
         for block in block_plaintext:
-            block_counter = counter.to_bytes(self.BLOCK_SIZE / 8, "big")
+            block_counter = counter.to_bytes(self.BLOCK_SIZE // 8, "big")
             result = self.cipher.encode_block(block_counter)
             ciphertext += ModeOperation._xorblock(result, block)
             counter += 1
         return ciphertext
 
     def encrypt(self, plaintext):
-        if len(plaintext) % (self.BLOCK_SIZE // 8) != 0:
-            raise Exception("Invalid size plaintext")
+        plaintext = self._pad_pkcs5(plaintext)
 
         n = self.BLOCK_SIZE // 8
         block_plaintext = [plaintext[n*i:n*(i+1)] for i in range(len(plaintext) // n)]
@@ -117,7 +120,7 @@ class ModeOperation:
         plaintext = b""
         counter: int = self.counter
         for block in block_ciphertext:
-            block_counter = counter.to_bytes(self.BLOCK_SIZE / 8, "big")
+            block_counter = counter.to_bytes(self.BLOCK_SIZE // 8, "big")
             result = self.cipher.encode_block(block_counter)
             plaintext += ModeOperation._xorblock(result, block)
             counter += 1
