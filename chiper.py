@@ -2,7 +2,7 @@ from keygen import KeyGenerator
 
 class Chiper():
     def init(self, key, ROUNDS=8):
-        self.BLOCK_SIZE = 256
+        self.BLOCK_SIZE = 128
         self.ROUNDS = ROUNDS
 
         self.key = key
@@ -21,8 +21,8 @@ class Chiper():
         This function is used to split `block` into L and R for feistel network.
         """
         # TODO: mager
-        L = block
-        R = block
+        L = block[:self.BLOCK_SIZE / 2 / 8]
+        R = block[self.BLOCK_SIZE / 2 / 8:]
         return L, R
     
     def _merge(self, L, R):
@@ -31,7 +31,7 @@ class Chiper():
         Should reversible from `Chiper.split()`
         """
         # TODO: mager
-        block = (L << 32) + R
+        block = L + R
         return block
     
     def _gen_keys(self):
