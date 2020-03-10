@@ -63,22 +63,22 @@ class ModeOperation:
         return ciphertext
 
     def encrypt(self, plaintext):
-        if len(plaintext) % self.BLOCK_SIZE != 0:
+        if len(plaintext) % (self.BLOCK_SIZE // 8) != 0:
             raise Exception("Invalid size plaintext")
 
-        n = self.BLOCK_SIZE
-        block_plaintext = [plaintext[n*i:n*(i+1)] for i in range(len(plaintext) / n)]
+        n = self.BLOCK_SIZE // 8
+        block_plaintext = [plaintext[n*i:n*(i+1)] for i in range(len(plaintext) // n)]
 
         if self.mode == ModeOperation.MODE_ECB:
             return self._encrypt_ecb(block_plaintext)
         elif self.mode == ModeOperation.MODE_CBC:
-            return self._encrypt_ecb(block_plaintext)
+            return self._encrypt_cbc(block_plaintext)
         elif self.mode == ModeOperation.MODE_CFB:
-            return self._encrypt_ecb(block_plaintext)
+            return self._encrypt_cfb(block_plaintext)
         elif self.mode == ModeOperation.MODE_OFB:
-            return self._encrypt_ecb(block_plaintext)
+            return self._encrypt_ofb(block_plaintext)
         elif self.mode == ModeOperation.MODE_COUNTER:
-            return self._encrypt_ecb(block_plaintext)
+            return self._encrypt_counter(block_plaintext)
 
     def _decrypt_ecb(self, block_ciphertext):
         plaintext = b""
@@ -99,7 +99,7 @@ class ModeOperation:
         plaintext = b""
         prev_block = self.iv
         for block in block_ciphertext:
-            result = self.cipher.decode_block(prev_block)
+            result = self.cipher.encode_block(prev_block)
             plaintext += ModeOperation._xorblock(result, block)
             prev_block = block
         return plaintext
@@ -108,7 +108,7 @@ class ModeOperation:
         plaintext = b""
         prev_block = self.iv
         for block in block_ciphertext:
-            result = self.cipher.decode_block(prev_block)
+            result = self.cipher.encode_block(prev_block)
             prev_block = result
             plaintext += ModeOperation._xorblock(result, block)
         return plaintext
@@ -118,25 +118,25 @@ class ModeOperation:
         counter: int = self.counter
         for block in block_ciphertext:
             block_counter = counter.to_bytes(self.BLOCK_SIZE / 8, "big")
-            result = self.cipher.decode_block(block_counter)
+            result = self.cipher.encode_block(block_counter)
             plaintext += ModeOperation._xorblock(result, block)
             counter += 1
         return plaintext
 
     def decrypt(self, ciphertext):
-        if len(ciphertext) % self.BLOCK_SIZE != 0:
+        if len(ciphertext) % (self.BLOCK_SIZE // 8) != 0:
             raise Exception("Invalid size ciphertext")
 
-        n = self.BLOCK_SIZE
-        block_ciphertext = [ciphertext[n*i:n*(i+1)] for i in range(len(ciphertext) / n)]
+        n = self.BLOCK_SIZE // 8
+        block_ciphertext = [ciphertext[n*i:n*(i+1)] for i in range(len(ciphertext) // n)]
 
         if self.mode == ModeOperation.MODE_ECB:
             return self._decrypt_ecb(block_ciphertext)
         elif self.mode == ModeOperation.MODE_CBC:
-            return self._decrypt_ecb(block_ciphertext)
+            return self._decrypt_cbc(block_ciphertext)
         elif self.mode == ModeOperation.MODE_CFB:
-            return self._decrypt_ecb(block_ciphertext)
+            return self._decrypt_cfb(block_ciphertext)
         elif self.mode == ModeOperation.MODE_OFB:
-            return self._decrypt_ecb(block_ciphertext)
+            return self._decrypt_ofb(block_ciphertext)
         elif self.mode == ModeOperation.MODE_COUNTER:
-            return self._decrypt_ecb(block_ciphertext)
+            return self._decrypt_counter(block_ciphertext)
