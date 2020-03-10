@@ -2,6 +2,7 @@ from keygen import KeyGenerator
 
 class Chiper():
     def init(self, key, ROUNDS=8):
+        self.BLOCK_SIZE = 256
         self.ROUNDS = ROUNDS
 
         self.key = key
@@ -62,4 +63,3 @@ class Chiper():
             prev_L = next_R ^ self._transform(next_L, current_key)
         
         return self._merge(prev_L, prev_R)
-    
