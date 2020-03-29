@@ -28,31 +28,56 @@ class Chiper():
         self.key = key
         self.keygen = KeyGenerator(key)
         self._gen_keys()
+        self.debug = False
     
     def _transform(self, block, key, n_bit_rearrange):
         """
         Internal transformation function.
         """
         # Xor with key
+        if self.debug:
+            print("xor with key")
+            print("before :", block)
         res1 = xorblock(block, key)
+        if self.debug:
+            print("after :", res1)
+            print()
 
         # bit rearrange
         temp_bit = BitArray(bytes=res1).bin
+        if self.debug:
+            print("bit rearrange")
+            print("before :", temp_bit)
         temp = ""
         for i in range(n_bit_rearrange):
             temp += temp_bit[i::n_bit_rearrange]
         res2 = int(temp, 2).to_bytes(self.BLOCK_SIZE // 2 // 8, "big")
+        if self.debug:
+            print("after :", temp)
+            print()
 
         # S-BOX
+        if self.debug:
+            print("byte substitution")
+            print("before :", res2)
         res3 = b""
         for c in res2:
             res3 += bytes([self._S_BOX[c]])
+        if self.debug:
+            print("after :", res3)
+            print()
 
         # permutation
+        if self.debug:
+            print("byte permutation")
+            print("before :", res3)
         temp = []
         for n in self._PERMUTATION_TABLE:
             temp.append(res3[n])
         block_result = bytes(temp)
+        if self.debug:
+            print("after :", block_result)
+            print()
 
         return block_result
 
@@ -82,9 +107,21 @@ class Chiper():
     def encode_block(self, block):
         next_L, next_R = self._split(block)
 
+        print()
+        print("Encrypt")
+
         for round in range(self.ROUNDS):
+            if round == 0:
+                self.debug = True
+            else:
+                self.debug = False
             prev_L, prev_R = next_L, next_R
             current_key = self.keys[round]
+
+            if self.debug:
+                print("Left :", prev_L)
+                print("Right :", prev_R)
+                print()
 
             next_L = prev_R
             next_R = xorblock(prev_L, self._transform(prev_R, current_key, 2))
@@ -94,9 +131,21 @@ class Chiper():
     def decode_block(self, block):
         prev_L, prev_R = self._split(block)
 
+        print()
+        print("Decrypt")
+
         for round in reversed(range(self.ROUNDS)):
+            if round == 0:
+                self.debug = True
+            else:
+                self.debug = False
             next_L, next_R = prev_L, prev_R
             current_key = self.keys[round]
+
+            if self.debug:
+                print("Left :", prev_L)
+                print("Right :", prev_R)
+                print()
 
             prev_R = next_L
             prev_L = xorblock(next_R, self._transform(next_L, current_key, 2))
